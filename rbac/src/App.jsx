@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect } from 'react';
-import {  UserIcon, CogIcon,  TrashIcon, EditIcon, LogOutIcon } from 'lucide-react';
+import { UserIcon, CogIcon, TrashIcon, EditIcon, LogOutIcon } from 'lucide-react';
 
 const HARDCODED_CREDENTIALS = [
   { username: 'admin', password: 'admin123', role: 'admin', email: 'admin@example.com', status: 'Active' },
@@ -26,7 +26,7 @@ const App = () => {
   useEffect(() => {
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const storedRoles = JSON.parse(localStorage.getItem('roles') || '[]');
-    
+
     if (storedUsers.length === 0) {
       const initialUsers = [...HARDCODED_CREDENTIALS];
       setUsers(initialUsers);
@@ -34,7 +34,7 @@ const App = () => {
     } else {
       setUsers(storedUsers);
     }
-    
+
     // Initialize default roles if no roles exist
     if (storedRoles.length === 0) {
       const initialRoles = [
@@ -96,7 +96,7 @@ const App = () => {
   };
 
   const updateRole = (id, updatedRole) => {
-    setRoles(roles.map(role => 
+    setRoles(roles.map(role =>
       role.id === id ? { ...role, ...updatedRole } : role
     ));
   };
@@ -111,7 +111,7 @@ const App = () => {
   };
 
   const updateUser = (id, updatedUser) => {
-    setUsers(users.map(user => 
+    setUsers(users.map(user =>
       user.id === id ? { ...user, ...updatedUser } : user
     ));
   };
@@ -120,17 +120,17 @@ const App = () => {
     // Prevent deletion of hardcoded users
     const hardcodedUsernames = HARDCODED_CREDENTIALS.map(u => u.username);
     const userToDelete = users.find(u => u.id === id);
-    
+
     if (hardcodedUsernames.includes(userToDelete.username)) {
       alert('Cannot delete default users');
       return;
     }
-    
+
     setUsers(users.filter(user => user.id !== id));
   };
 
   const renderDashboardContent = () => {
-    if (currentUser.role === 'users') {
+    if (currentUser.role !== 'admin' && currentUser.role !== 'editor') {
       return (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-4">Access Denied</h2>
@@ -138,27 +138,37 @@ const App = () => {
         </div>
       );
     }
-    else if(currentUser.role === 'editor'){
-      return(
+    if (currentUser.role === 'editor') {
+      return (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-2xl font-bold mb-4">Editor Dashboard</h2>
-          <p>Welcome, {currentUser.username}!</p>
-          {currentUser.role !== "Editor" ? <RoleManagement /> : null}
+          <p className='mb-5'>Welcome, {currentUser.username}!</p>
+          {currentUser.role === "Editor" ? <RoleManagement
+            roles={roles}
+            onAddRole={addRole}
+            onUpdateRole={updateRole}
+            onDeleteRole={deleteRole}
+          /> : <UserManagement
+            users={users}
+            roles={roles}
+            onUpdateUser={updateUser}
+            onDeleteUser={deleteUser}
+          />}
 
-         
+
         </div>
       )
     }
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <UserManagement 
-          users={users} 
+        <UserManagement
+          users={users}
           roles={roles}
           onUpdateUser={updateUser}
           onDeleteUser={deleteUser}
         />
-        <RoleManagement 
+        <RoleManagement
           roles={roles}
           onAddRole={addRole}
           onUpdateRole={updateRole}
@@ -170,14 +180,14 @@ const App = () => {
 
   return (
     <AuthContext.Provider value={{ currentUser, login, logout, register }}>
-      <div className="min-h-screen bg-gray-100 p-8">
+      <div className="min-h-screen bg-blue-100 p-8">
         {!currentUser ? (
           <AuthenticationPage />
         ) : (
           <div>
-            <div className="flex justify-between p-2 rounded-lg items-center mb-6 bg-blue-200">
+            <div className="flex justify-between p-2 px-5 rounded-lg items-center mb-6 bg-blue-200">
               <h1 className="text-2xl font-bold">Dashboard</h1>
-              <button 
+              <button
                 onClick={logout}
                 className="bg-red-500 text-white p-2 rounded flex items-center hover:bg-red-600"
               >
@@ -197,7 +207,7 @@ const RoleManagement = ({ roles, onAddRole, onUpdateRole, onDeleteRole }) => {
   const [editingRole, setEditingRole] = useState(null);
 
   const handlePermissionChange = (permission) => {
-    const updatedPermissions = editingRole 
+    const updatedPermissions = editingRole
       ? { ...editingRole.permissions, [permission]: !editingRole.permissions[permission] }
       : { ...newRole.permissions, [permission]: !newRole.permissions[permission] };
 
@@ -219,7 +229,7 @@ const RoleManagement = ({ roles, onAddRole, onUpdateRole, onDeleteRole }) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="bg-cyan-100/40 backdrop-blur-2xl p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 flex items-center">
         <CogIcon className="mr-2" /> Role Management
       </h2>
@@ -229,10 +239,10 @@ const RoleManagement = ({ roles, onAddRole, onUpdateRole, onDeleteRole }) => {
             type="text"
             placeholder="Role Name"
             value={editingRole ? editingRole.name : newRole.name}
-            onChange={(e) => 
-              editingRole 
-                ? setEditingRole({...editingRole, name: e.target.value})
-                : setNewRole({...newRole, name: e.target.value})
+            onChange={(e) =>
+              editingRole
+                ? setEditingRole({ ...editingRole, name: e.target.value })
+                : setNewRole({ ...newRole, name: e.target.value })
             }
             className="w-full p-2 border rounded"
           />
@@ -245,7 +255,7 @@ const RoleManagement = ({ roles, onAddRole, onUpdateRole, onDeleteRole }) => {
                 type="checkbox"
                 id={permission}
                 checked={
-                  editingRole 
+                  editingRole
                     ? editingRole.permissions[permission]
                     : newRole.permissions[permission]
                 }
@@ -260,14 +270,14 @@ const RoleManagement = ({ roles, onAddRole, onUpdateRole, onDeleteRole }) => {
         </div>
 
         <div className="flex space-x-2">
-          <button 
+          <button
             onClick={handleSaveRole}
             className="bg-green-500 text-white p-2 rounded flex-grow hover:bg-green-600"
           >
             {editingRole ? 'Update Role' : 'Add Role'}
           </button>
           {editingRole && (
-            <button 
+            <button
               onClick={() => setEditingRole(null)}
               className="bg-gray-300 text-black p-2 rounded hover:bg-gray-400"
             >
@@ -298,13 +308,13 @@ const RoleManagement = ({ roles, onAddRole, onUpdateRole, onDeleteRole }) => {
                     .join(', ')}
                 </td>
                 <td className="p-2 text-right">
-                  <button 
+                  <button
                     onClick={() => setEditingRole(role)}
                     className="mr-2 text-blue-500 hover:text-blue-700"
                   >
                     <EditIcon size={16} />
                   </button>
-                  <button 
+                  <button
                     onClick={() => onDeleteRole(role.id)}
                     className="text-red-500 hover:text-red-700"
                   >
@@ -335,13 +345,13 @@ const UserManagement = ({ users, roles, onUpdateUser, onDeleteUser }) => {
   };
 
   return (
-    <div className="bg-white/70 p-6 rounded-lg shadow-md">
+    <div className="bg-cyan-100/40 backdrop-blur-2xl p-6 rounded-lg shadow-md">
       <h2 className="text-2xl font-bold mb-4 flex items-center">
         <UserIcon className="mr-2" /> User Management
       </h2>
       <table className="w-full">
         <thead>
-          <tr className="bg-gray-100">
+          <tr className="bg-gray-200/50 rounded-lg ">
             <th className="p-2 text-left">Username</th>
             <th className="p-2 text-left">Email</th>
             <th className="p-2 text-left">Role</th>
@@ -357,13 +367,13 @@ const UserManagement = ({ users, roles, onUpdateUser, onDeleteUser }) => {
               <td className="p-2">{user.role}</td>
               <td className="p-2">{user.status}</td>
               <td className="p-2 text-right">
-                <button 
+                <button
                   onClick={() => handleEditUser(user)}
                   className="mr-2 text-blue-500 hover:text-blue-700"
                 >
                   <EditIcon size={16} />
                 </button>
-                <button 
+                <button
                   onClick={() => onDeleteUser(user.id)}
                   className="text-red-500 hover:text-red-700"
                 >
@@ -376,12 +386,12 @@ const UserManagement = ({ users, roles, onUpdateUser, onDeleteUser }) => {
       </table>
 
       {selectedUser && (
-        <div className="mt-4 p-4 bg-gray-50 rounded">
+        <div className="mt-4 p-4 bg-gray-100 rounded">
           <h3 className="text-lg font-semibold mb-2">Edit User</h3>
           <div className="grid grid-cols-2 gap-4">
             <select
               value={selectedUser.role}
-              onChange={(e) => setSelectedUser({...selectedUser, role: e.target.value})}
+              onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value })}
               className="p-2 border rounded"
             >
               {roles.map(role => (
@@ -390,19 +400,19 @@ const UserManagement = ({ users, roles, onUpdateUser, onDeleteUser }) => {
             </select>
             <select
               value={selectedUser.status}
-              onChange={(e) => setSelectedUser({...selectedUser, status: e.target.value})}
+              onChange={(e) => setSelectedUser({ ...selectedUser, status: e.target.value })}
               className="p-2 border rounded"
             >
               <option value="Active">Active</option>
               <option value="Inactive">Inactive</option>
             </select>
-            <button 
+            <button
               onClick={handleSaveUser}
               className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
             >
               Save Changes
             </button>
-            <button 
+            <button
               onClick={() => setSelectedUser(null)}
               className="bg-gray-300 text-black p-2 rounded hover:bg-gray-400"
             >
@@ -416,93 +426,122 @@ const UserManagement = ({ users, roles, onUpdateUser, onDeleteUser }) => {
 };
 
 const AuthenticationPage = () => {
-    const [isLogin, setIsLogin] = useState(true);
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [email, setEmail] = useState('');
-    const [role, setRole] = useState('');
-  
-    const { login, register } = React.useContext(AuthContext);
-  
-    const handleSubmit = (e) => {
-      e.preventDefault();
-      if (isLogin) {
-        if (!login(username, password)) {
-          alert('Invalid credentials');
-        }
-      } else {
-        if (register(username, password, email, role)) {
-          setIsLogin(true);
-        } else {
-          alert('Registration failed. Username might already exist.');
-        }
+  const [isLogin, setIsLogin] = useState(true);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [role, setRole] = useState('');
+
+  const { login, register } = React.useContext(AuthContext);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (isLogin) {
+      if (!login(username, password)) {
+        alert('Invalid credentials');
       }
-    };
-  
-    return (
-      <div className="flex justify-center rounded-3xl items-center min-h-screen bg-gray-300">
-        <div className="bg-white p-8 rounded-lg shadow-md w-96">
-          <h2 className="text-2xl font-bold mb-6 text-center">
+    } else {
+      if (register(username, password, email, role)) {
+        setIsLogin(true);
+      } else {
+        alert('Registration failed. Username might already exist.');
+      }
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-10 justify-center rounded-3xl items-center min-h-screen bg-blue-200/50 backdrop-blur-2xl">
+      <div className="bg-blue-50 p-8 rounded-lg shadow-md w-96">
+        <h2 className="text-2xl font-bold mb-6 text-center">
+          {isLogin ? 'Login' : 'Register'}
+        </h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full p-2 border rounded"
+            required
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full p-2 border rounded"
+            required
+          />
+          {!isLogin && (
+            <>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              />
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="w-full p-2 border rounded"
+                required
+              >
+                <option value="">Select Role</option>
+                <option value="user">User</option>
+                <option value="editor">Editor</option>
+              </select>
+            </>
+          )}
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          >
             {isLogin ? 'Login' : 'Register'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full p-2 border rounded"
-              required
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 border rounded"
-              required
-            />
-            {!isLogin && (
-              <>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-2 border rounded"
-                  required
-                />
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full p-2 border rounded"
-                  required
-                >
-                  <option value="">Select Role</option>
-                  <option value="user">User</option>
-                  <option value="editor">Editor</option>
-                </select>
-              </>
-            )}
-            <button
-              type="submit"
-              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
-            >
-              {isLogin ? 'Login' : 'Register'}
-            </button>
-          </form>
-          <p className="text-center mt-4">
-            {isLogin ? "Don't have an account? " : "Already have an account? "}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-500 hover:underline"
-            >
-              {isLogin ? 'Register' : 'Login'}
-            </button>
-          </p>
+          </button>
+        </form>
+        <p className="text-center mt-4">
+          {isLogin ? "Don't have an account? " : "Already have an account? "}
+          <button
+            onClick={() => setIsLogin(!isLogin)}
+            className="text-blue-500 hover:underline"
+          >
+            {isLogin ? 'Register' : 'Login'}
+          </button>
+        </p>
+      </div>
+
+      <div className='flex flex-col justify-center items-center gap-5 bg-blue-50/40 p-8 rounded-lg shadow-md'>
+        <h2 className='text-xl'>Saved Logins</h2>
+        <div>
+          <table  className="w-full">
+            <thead>
+              <tr className="bg-gray-200/50 rounded-lg text-center">
+                <th className="p-2 ">Username</th>
+                <th className="p-2 ">Password</th>
+                <th className="p-2 ">Email</th>
+                <th className="p-2 ">Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              {HARDCODED_CREDENTIALS.map((user) => (
+                <tr key={user.username} className="border-b">
+                  <td className="p-2" >{user.username}</td>
+                  <td className="p-2">{user.password}</td>
+                  <td className="p-2">{user.email}</td>
+                  <td className="p-2" >{user.role}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
-    );
-  };
+
+
+
+    </div>
+  );
+};
 
 export default App;
