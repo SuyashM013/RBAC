@@ -12,3 +12,5 @@ npm install
 npm run dev
 
 output should be shown on http://localhost:5173/ server. 
+
+Deployed On Vercel and site is live on - https://rbac-coral.vercel.app/
